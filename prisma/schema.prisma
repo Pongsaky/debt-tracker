@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Debtor {
+  id          String        @id @default(uuid())
+  englishName String        @unique
+  thaiName    String
+  debtMembers DebtMember[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model DebtSection {
+  id          String        @id @default(uuid())
+  name        String
+  category    DebtCategory
+  status      DebtStatus
+  createdDate DateTime      @default(now())
+  endDate     DateTime?
+  duration    String?
+  debtMembers DebtMember[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model DebtMember {
+  id             String      @id @default(uuid())
+  debtorId       String
+  debtor         Debtor      @relation(fields: [debtorId], references: [id])
+  debtSectionId  String
+  debtSection    DebtSection @relation(fields: [debtSectionId], references: [id])
+  outstandingCash Float
+  increaseDebt   Float?
+  hasPaid        Boolean     @default(false)
+  history        History[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@unique([debtorId, debtSectionId])
+}
+
+model History {
+  id           String      @id @default(uuid())
+  debtMemberId String
+  debtMember   DebtMember  @relation(fields: [debtMemberId], references: [id])
+  date         DateTime    @default(now())
+  amount       Float
+  type         HistoryType
+  note         String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+enum DebtCategory {
+  Monthly
+  Daily
+  Weekly
+  EveryXDays
+  OneTime
+}
+
+enum DebtStatus {
+  Completed
+  InProgress
+}
+
+enum HistoryType {
+  increase
+  payment
+}
